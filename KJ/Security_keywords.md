@@ -172,8 +172,69 @@
 
 - **Fuzzing** : 무작위한 또는 유효하지 않은 입력을 주입하여 소프트웨어나 기술의 장애를 유발함으로써 새로운 취약점을 찾아내는 방법.
 
+- **MSP** : Managed Service Provider, 관리형 서비스 제공업체
+ 
+- **MUA** : Mail User Agent(메일 사용자 에이전트), MS Outlook Mozilla Thunderburd와 같은 클라이언트 프로그램.
 
+- **MTA** : Mail Transfer Agent(메일 전송 에이전트), 메일 서버에서 실행됨
 
+- **MDA** : Mail Delevery Agent(메일 배송 에이전트), MTA로부터 전달받은 메일을 타 MUA로 전달
+
+- **SMTP** : Simple Mail Transfer Protocol, 메일 전달 프로토콜
+
+- **POP** : Post office Protocol, 우체국 프로토콜, 구형 시스템은 아직 POP3를 많이 사용
+
+- **IMAP** : Internet Message Access Protocol, 인터넷 메세지 접속 프로토콜, POP 대비 더 최신식
+
+- **Mail header** : 메일 전송시 기록된 데이터 값
+
+- **DSN** : Delivery status notification, 배송 상태 알림
+
+- **Spear Phishing** : 피싱 메일, 메일을 이용한 사회공학적 해킹
+
+- **Single point of Failure** : 단일 장애점, 해당 목표가 공격당하면 서비스가 마비되게 됨.
+
+- **SPF** : Sender Policy Framework, 전송자 정책 프레임워크 사용자가 자신의 이메일 주소를 위조하지 못하게하는 메커니즘 (메일 서버 등록제)
+
+- **traceroute** : 원격 호스트로의 경로를 파악하거나 패킷이 목적지 호스트에 도달하고 돌아오는 시간을 측정하는데 사용하는 툴 
+
+- **ACK** : Acknowledgement, 확인 응답 
+
+- **Netcat** : nc로 실행, TCP 네트워크 연결로부터 문자열을 읽거나 기록하는 기능을 수행 
+
+- **Banner grabbing** : 배너 그래빙은 컴퓨터에서 실행중인 서비스에 접속해서 서비스가 표시한 배너를 갈무리하는 것을 뜻함.
+
+- **Open relay** : 오픈 릴레이, 혹은 개방형 중계를 의미, SMTP의 한 기능으로써 알려지지 않은 사용자 또한 메일을 보낼수 있게 함. 이로 인해 스팸, 위조(스푸핑) 등의 공격에 취약함.
+
+- **SSL** : Secure Socket Layer (보안 소켓 계층)
+
+- **TLS** : Trnsport Layer Security (전송 계층 보안)
+
+- **Exim** : Unix 계열 시스템의 MTA 프로그램
+
+- **PHP** : Hypertext Preprocessor, 웹개발 언어
+
+- **Finger Service** : 사용자 정보 확인 서비스
+
+- **Heartbleed bug** : CVE-2014-0160 하트블리드 취약점, 클라와 서버 간 통신 확인용 하트비트 프로토콜에서 발생한 취약점
+
+- **Payload** : 해킹의 맥락에서 페이로드는 실제 대상 시스템에 피해를 주는 악성 코드, 즉 네트워크에서 실제 전달되는 데이터로써, 악성 페이로드는 대상 시스템에 영향을 주거나 데이터 접근이 가능하도록 함.
+
+- **Bind Payload** : 대상 시스템의 한 포트에 listener을 설치하고 공격자 컴퓨터의 연결을 기다리게 함 
+
+- **Reverse Payload** : 대상시스템이 공격자의 포트에 연결하게 만드는것을 목적으로 함. 
+
+- **Findsock Payload** : 대상 호스트의 기존 소켓을 찾아서 사용하여  공격함.
+
+- **Postexploitation phase** : 악용 후 단계
+
+- **Remote command execution** : 원격 명령 실행, 이를 이용하여 대상 시스템에서 원하는 동작을 수행하게 할 수 있다.
+
+- **Local Privilege escalation** : 지역 권한 상승, 이를 이용하여 시스템 권한을 탈취할 수 있다.
+
+- **Reverse shell** : 대상 시스템이 역으로 공격 시스템에 접근하게 하여 방화벽을 무력화시키는 공격 방식 https://2-juhyun-2.tistory.com/498
+
+- **Tunneling** : 터널링, 데이터 스트림을 가상의 파이프를 통해 전달시키는 기술, 즉 패킷내에 터널링할 대상을 캡슐화하여 목적지까지 전송.
 
 
 
