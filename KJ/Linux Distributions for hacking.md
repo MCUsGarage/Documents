@@ -59,10 +59,10 @@
   - 패럿 OS : https://www.youtube.com/watch?v=9z-_h7aChDI
 
 - 설치가 완료되면 아래와 같은 화면을 확인 할 수 있음
-  - 칼리
+  - 칼리<br/>
   ![칼리](Image/Kali.png)
-  ##
-  - 패럿
+  <br/>
+  - 패럿<br/>
   ![패럿](Image/Parrot.png)
 
 - 두 배포판 모두 사용자 UI에서 쉽게 툴들에 접근할 수 있으며, 또한 CLI 환경에서의 완벽한 동작을 수행한다. 
