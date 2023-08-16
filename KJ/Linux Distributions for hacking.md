@@ -57,3 +57,13 @@
 - 설치법은 아래의 영상을 참조
   - 칼리 리눅스 : https://www.youtube.com/watch?v=l97dVIKlmVg&pp=ygUgaW5zdGFsbCBrYWxpIGxpbnV4IG9uIHZpcnR1YWxib3g%3D
   - 패럿 OS : https://www.youtube.com/watch?v=9z-_h7aChDI
+
+- 설치가 완료되면 아래와 같은 화면을 확인 할 수 있음
+  - 칼리
+  ![칼리](Image/Kali.png)
+  ##
+  - 패럿
+  ![패럿](Image/Parrot.png)
+
+- 두 배포판 모두 사용자 UI에서 쉽게 툴들에 접근할 수 있으며, 또한 CLI 환경에서의 완벽한 동작을 수행한다. 
+- 두 OS 모두 Debian 배포판이므로 sudo apt ~ 로 원하는 패키지를 추가로 설치할 수 있다.
