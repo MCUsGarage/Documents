@@ -21,7 +21,14 @@
 >   - https://aiton.tistory.com/8
 
 >2. **Pwnable**
->   -
+>   - 시스템 해킹을 수행, 주로프로그램이나 시스템의 취약점을 파악하고 공격하는 방식. 아래는 Pwnable에 대한 공격 방법 소개나 문제 풀이들을 제시
+>   - pwnable.kr
+>   - https://snwo.tistory.com/147
+>   - https://web.joongbu.ac.kr/hakbu/fileDownload?titleId=733&fileId=2&fileDownType=C&paramMenuId=MENU00491
+>   - https://ludere.tistory.com/52
+>   - https://ndb796.tistory.com/88
+>   - https://secu-agnes.tistory.com/entry/pwnablekr-mistake-%ED%92%80%EC%9D%B4
+
 >3. **Web**
 >   -
 >4. **Exploit**
