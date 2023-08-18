@@ -105,6 +105,36 @@ app.run(host='0.0.0.0', port=8000)
 - users에 guest/guest 가 있으니 이 계정으로 로그인해서 쿠키를 설정하고 값을 admin 으로 바꾸면 됨
 - 쿠키에 username: admin으로 직접 설정해도 됨 
 
+### SOP - Same Origin Policy
+
+동일 출처 정책. 
+클라이언트의 권한을 이용해 HTTP 요청을 보내고 HTTP 응답 정보를 획득 하는 코드를 실행할 수 있음. 이런 경우  가져온 데이터를 악의적인 페이지에서 읽을 수 없도록 하는 보안 메커니즘
+
+Cross Origin: 현재 페이지와 다른 출처
+- Origin과 URL을 비교했을 때 Scheme(프로토콜), Host, Port 가 다른경우  
+
+### CORS - Cross Origin Resource Sharing
+
+교차 출처 리소스 공유
+- 동일 출처 정책을 완화해서 다른 출처의 데이터를 처리해야 하는 경우가 필요함
+
+처리 방법 1. CORS 관련 HTTP 헤더 추가 전송 - OPTIONS (HTTP Method)
+
+|**Header**|**설명**|
+|---|---|
+|Access-Control-Allow-Origin|헤더 값에 해당하는 Origin에서 들어오는 요청만 처리합니다.|
+|Access-Control-Allow-Methods|헤더 값에 해당하는 메소드의 요청만 처리합니다.|
+|Access-Control-Allow-Credentials|쿠키 사용 여부를 판단합니다. 예시의 경우 쿠키의 사용을 허용합니다.|
+|Access-Control-Allow-Headers|헤더 값에 해당하는 헤더의 사용 가능 여부를 나타냅니다.|
+
+- CORS preflight: 서버에 웹 리소스를 요청해도 되는지 요청
+	- preflight에 대한 응답으로 Access-Control-Allow 내용을 보냄. 서버에선 해당 요청만 
+- 브라우저는 수신측의 응답이 발신측의 요청과 상응하는지 확인하고, 그때야 비로소 POST 요청을 보내 수신측의 웹 리소스를 요청하는 HTTP 요청을 보냄
+
+처리 방법 2. JSON with Padding (JSONP) 
+- CORS가 생기기 전에 사용하던 방법으로 거의 사용하지 않는 추세
+`<script>` 태그로 Cross Origin의 데이터를 불러옵니다. 하지만 `<script>` 태그 내에서는 데이터를 자바스크립트의 코드로 인식하기 때문에 **Callback 함수**를 활용해야 합니다. Cross Origin에 요청할 때 callback 파라미터에 어떤 함수로 받아오는 데이터를 핸들링할지 넘겨주면, 대상 서버는 전달된 Callback으로 데이터를 감싸 응답합니다.
+
 ## XSS - Cross site scripting
 
 ## Cross Site Request Forgery
