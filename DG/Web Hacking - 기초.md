@@ -44,6 +44,67 @@ HTTP 프로토콜 특징
 - 쿠키에 세션 정보(session id)가 저장되어 있고 서버는 이를 통해 이용자 식별하고 인증을 처리함.
 - 다른 사람이 쿠키 변조를 통해 session id를 보내서 인증을 통과시키면 특정 사람인 것처럼 활동 가능
 
+### Dreamhack - cookie
+쿠키로 인증 상태를 관리하는 간단한 로그인 서비스입니다.  
+admin 계정으로 로그인에 성공하면 플래그를 획득할 수 있습니다.
+
+문제파일 - flask server
+
+```python
+#!/usr/bin/python3
+from flask import Flask, request, render_template, make_response, redirect, url_for
+
+app = Flask(__name__)
+
+try:
+    FLAG = open('./flag.txt', 'r').read()
+except:
+    FLAG = '[**FLAG**]'
+
+users = {
+    'guest': 'guest',
+    'admin': FLAG
+}
+
+@app.route('/')
+def index():
+    username = request.cookies.get('username', None)
+    if username:
+        return render_template('index.html', text=f'Hello {username}, {"flag is " + FLAG if username == "admin" else "you are not admin"}')
+    return render_template('index.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'GET':
+        return render_template('login.html')
+    elif request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        try:
+            pw = users[username]
+        except:
+            return '<script>alert("not found user");history.go(-1);</script>'
+        if pw == password:
+            resp = make_response(redirect(url_for('index')) )
+            resp.set_cookie('username', username)
+            return resp 
+        return '<script>alert("wrong password");history.go(-1);</script>'
+
+app.run(host='0.0.0.0', port=8000)
+
+```
+
+- 함수 index 에서 쿠키의 username을 가져와서 있으면 text를 렌더링함
+	- admin으로 로그인하면 flag 를 출력함
+- 함수 login 에서 username, password로 로그인 처리함
+	- pw를 users 배열에서 확인하고 입력한 비밀번호랑 맞으면 쿠키를 설정함
+
+ ![login_page][./images/20230818171908.png]
+![guest_login](20230818172344.png)
+![set_cookie_admin](Pasted%20image%2020230818172513.png)
+- users에 guest/guest 가 있으니 이 계정으로 로그인해서 쿠키를 설정하고 값을 admin 으로 바꾸면 됨
+- 쿠키에 username: admin으로 직접 설정해도 됨 
+
 ## XSS - Cross site scripting
 
 ## Cross Site Request Forgery
