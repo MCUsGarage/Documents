@@ -66,3 +66,86 @@ disassemble로 binary를 분석하기가 이전보다 쉬워졌지만, 규모가
 하지만 이러한 오차가 동작에 왜곡을 주지는 않기 때문에 분석 자체에는 영향을 주지 않는다. 
 
 사용 가능한 툴로는 Hex Rays, Ghidra 등이 있으며 IDA Freeware도 사용가능하다. 
+
+# Computer Architecture X86-64
+
+32bit니, 64bit니 하는 것은 CPU가 한 번에 처리할 수 있는 데이터 단위를 의미한다. 이것을 우리는 WORD라고 부른다. 
+
+WORD가 크면 유리한 점은 Virtual Memory를 크게 가질 수 있다는 점이다. 
+
+x86-64 Architecture : Register는 아래와 같다.
+
+
+## 범용 레지스터
+rax(accumulator register) : 함수의 반환 값
+rbx(base register) : x86에서는 주된 용도 없음
+rcx(counter register) : 반복문의 반복 횟수, 각종 연산의 시행 횟수
+rdx(data register) : x86에서는 주된 용도 없음
+rsi(source index) : 데이터를 옮길 때 원본을 가리키는 포인터
+rdi(destination index) : 데이터를 옮길 때 목적지를 가리키는 포인터 
+</br>
+</br>
+
+### 세그먼트 레지스터
+cs, ss, ds, es, fs, gs 이며 각 16bit
+
+cs,ds,ss 레지스터는 코드 영역, 데이터, 스텍 메모리영역을 가리킬 때, 나머지 레지스터는 운영체제 별로 용도를 결정할 수 있게 제작된 세그먼트 레지스터이다. 
+</br>
+</br>
+
+### 명령어 포인터 레지스터
+rip 이며 8bit이다. 
+</br>
+</br>
+
+### 플레그 레지스터
+RFLAGS라고 불리는 64bit 레지스터가 있다. 
+이 레지스터는 각 bit별로 CPU의 상태를 표현한다. 
+
+CF(Carry Flag) : 부호없는 수의 연산 결과가 비트 범위를 넘을 경우 설정
+
+ZF(Zero Flag) : 연산의 결과가 0일 경우 설정
+
+SF(Sign Flag) : 연산의 결과가 음수일 경우 설정
+
+OF(Overflow Flag) : 부호있는 수의 연산 결과가 비트 범위를 넘을 경우 설정
+
+# Windows Memory Layout
+
+## section
+ : text, data, rdata로 나누어진다. 
+
+
+</br>
+</br>
+
+ * .text : 실행할 수 있는 machine code 영역
+ * .data : 컴파일 시점에 값이 정해진 전역변수
+ * .rdata : 컴파일 시점에 값이 정해진 전역상수와 참조한 DLL 및 외부함수 정보
+
+ 
+
+## stack
+ : 지역 변수나 함수의 리턴 주소가 저장된다. 
+ 
+## heap
+ : 동적 할당한 영역
+
+
+</br>
+</br>
+
+# x86 Assembly
+
+ISA(Instruction Set Architecture) : 명령어 집합구조
+
+
+![assembly](./img/assembly_1.png)
+
+피연산자 
+
+* 상수 (Immediate Value)
+* 레지스터 (Register)
+* 메모리 (Memory)
+
+![assembly2](./img/assembly_2.png)
