@@ -312,6 +312,245 @@ def vuln():
 
 ## Cross Site Request Forgery
 
+교차 사이트 요청 위조
+- 이용자가 자신의 의지와는 무관하게 공격자가 의도한 행위를 특정 웹사이트에 요청하게 만드는 공격.
+- 임의 이용자의 권한으로 임의 주소에 HTTP 요청을 보낼 수 있는 취약점
+
+공격자가 작성한 악성 스크립트(HTTP 요청을 보내는 코드)를 이용자가 실행해야함
+- HTML tag 혹은 javascript로 작성.
+- HTML tag: img, form
+	- 두개의 태그를 사용해 HTTP 전송을 보내면 HTTP 헤더(쿠키)에 인증정보가 포함됨
+	- `<img src="~" width=0px, height=0px>`
+- javascript: 
+```javascript
+/* 새 창 띄우기 */
+window.open('~');
+/* 현재 창 주소 옮기기 */
+ocation.href = '~';
+location.replace('~');
+```
+
+ex) 
+아래와 같은 서버
+```python
+# 이용자가 /sendmoney에 접속했을때 아래와 같은 송금 기능을 웹 서비스가 실행함.
+@app.route('/sendmoney')
+def sendmoney(name): 
+	# 송금을 받는 사람과 금액을 입력받음. 
+	to_user = request.args.get('to')
+	amount = int(request.args.get('amount'))
+	# 송금 기능 실행 후, 결과 반환 
+	success_status = send_money(to_user, amount) 
+	# 송금이 성공했을 때,
+	if success_status: 
+		# 성공 메시지 출력 
+		return "Send success." 
+	#송금이 실패했을 때, 
+	else: 
+		# 실패 메시지 출력 
+		return "Send fail."
+```
+![csrf-attack](images/Pasted%20image%2020230821210418.png)
+![csrf-result](images/Pasted%20image%2020230821210347.png)
+
+### wargame
+csrf-1
+```python
+#!/usr/bin/python3
+from flask import Flask, request, render_template
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+import urllib
+import os
+  
+app = Flask(__name__)
+app.secret_key = os.urandom(32)
+  
+try:
+	FLAG = open("./flag.txt", "r").read()
+except:
+	FLAG = "[**FLAG**]"
+  
+ 
+def read_url(url, cookie={"name": "name", "value": "value"}):
+	pass
+  
+ 
+def check_csrf(param, cookie={"name": "name", "value": "value"}):
+url = f"http://127.0.0.1:8000/vuln?param={urllib.parse.quote(param)}"
+return read_url(url, cookie)
+  
+ 
+@app.route("/")
+def index():
+	return render_template("index.html")
+  
+ 
+@app.route("/vuln")
+def vuln():
+	param = request.args.get("param", "").lower()
+	xss_filter = ["frame", "script", "on"]
+	for _ in xss_filter:
+		param = param.replace(_, "*")
+	return param
+  
+ 
+@app.route("/flag", methods=["GET", "POST"])
+def flag():
+	if request.method == "GET":
+		return render_template("flag.html")
+	elif request.method == "POST":
+		param = request.form.get("param", "")
+		if not check_csrf(param):
+			return '<script>alert("wrong??");history.go(-1);</script>'
+  
+	return '<script>alert("good");history.go(-1);</script>'
+  
+memo_text = ""
+ 
+@app.route("/memo")
+def memo():
+global memo_text
+	text = request.args.get("memo", None)
+	if text:
+		memo_text += text
+	return render_template("memo.html", memo=memo_text)
+  
+ 
+@app.route("/admin/notice_flag")
+def admin_notice_flag():
+	global memo_text
+	if request.remote_addr != "127.0.0.1":
+		return "Access Denied"
+	if request.args.get("userid", "") != "admin":
+		return "Access Denied 2"
+	memo_text += f"[Notice] flag is {FLAG}\n"
+	return "Ok"
+  
+
+app.run(host="0.0.0.0", port=8000)
+```
+- 이전에 풀었던 워게임이랑 코드가 비슷함 -> xss 필터링이 있고 xss로는 풀지 못함
+- 다른 점만 본다면 admin_notice_flag 함수가 생김
+	- /admin/notice_flag 로 접속하면 조건에 맞는 경우 flag를 찾을수 있음
+	- 조건: 로컬(127.0.0.1) 인지 확인하고 파라미터로 userid가 admin인지 확인
+	- 즉, 서버 자체에서 코드를 실행하게끔 만들어야함
+	- vuln 페이지에서 xss 필터링을 제외하면 태그는 들어갈수 있도록 만들어짐. -> vuln 페이지를 통해서 코드를 실행시킴 
+	- `<img src="http://127.0.0.1:8000/admin/notice_flag?userid=admin">`
+
+![csrf-1-flag](images/Pasted%20image%2020230821213112.png)
+
+csrf-2
+```python
+#!/usr/bin/python3
+from flask import Flask, request, render_template, make_response, redirect, url_for
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+import urllib
+import os
+  
+app = Flask(__name__)
+app.secret_key = os.urandom(32)
+  
+try:
+	FLAG = open("./flag.txt", "r").read()
+except:
+	FLAG = "[**FLAG**]"
+  
+users = {
+	'guest': 'guest',
+	'admin': FLAG
+}
+  
+session_storage = {}
+  
+def read_url(url, cookie={"name": "name", "value": "value"}):
+	pass
+  
+
+def check_csrf(param, cookie={"name": "name", "value": "value"}):
+	url = f"http://127.0.0.1:8000/vuln?param={urllib.parse.quote(param)}"
+	return read_url(url, cookie)
+  
+ 
+@app.route("/")
+def index():
+	session_id = request.cookies.get('sessionid', None)
+	try:
+		username = session_storage[session_id]
+	except KeyError:
+		return render_template('index.html', text='please login')
+	  
+	return render_template('index.html', text=f'Hello {username}, {"flag is "  FLAG if username == "admin" else "you are not an admin"}')
+  
+ 
+@app.route("/vuln")
+def vuln():
+	param = request.args.get("param", "").lower()
+	xss_filter = ["frame", "script", "on"]
+	for _ in xss_filter:
+		param = param.replace(_, "*")
+	return param
+  
+ 
+@app.route("/flag", methods=["GET", "POST"])
+def flag():
+	if request.method == "GET":
+		return render_template("flag.html")
+	elif request.method == "POST":
+		param = request.form.get("param", "")
+		session_id = os.urandom(16).hex()
+		session_storage[session_id] = 'admin'
+		if not check_csrf(param, {"name":"sessionid", "value": session_id}):
+			return '<script>alert("wrong??");history.go(-1);</script>'
+	  
+	return '<script>alert("good");history.go(-1);</script>'
+  
+  
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+	if request.method == 'GET':
+		return render_template('login.html')
+	elif request.method == 'POST':
+	username = request.form.get('username')
+	password = request.form.get('password')
+	try:
+		pw = users[username]
+	except:
+		return '<script>alert("not found user");history.go(-1);</script>'
+	if pw == password:
+		resp = make_response(redirect(url_for('index')) )
+		session_id = os.urandom(8).hex()
+		session_storage[session_id] = username
+		resp.set_cookie('sessionid', session_id)
+		return resp
+	return '<script>alert("wrong password");history.go(-1);</script>'
+  
+ 
+@app.route("/change_password")
+def change_password():
+	pw = request.args.get("pw", "")
+	session_id = request.cookies.get('sessionid', None)
+	try:
+		username = session_storage[session_id]
+	except KeyError:
+		return render_template('index.html', text='please login')
+	  
+	users[username] = pw
+	return 'Done'
+  
+app.run(host="0.0.0.0", port=8000)
+```
+-  users 에 guest가 있고 admin이 있음
+	- index의 렌더값이 admin으로 로그인했을때 flag가 나오도록 설정됨
+- flag 페이지에서 admin 으로 설정되는 걸 볼수있음.
+	- flag 페이지를 통하면 admin 계정을 탈취할수 있음
+- change_password를 사용하면 현재 sessionid와 연결된 계정의 비밀번호를 바꿀수있음
+	- flag 페이지에서 admin 계정으로 change_password url을 통하면 admin의 비밀번호를 바꿀수 있음
+	- `<img src="/change_password?pw=a">` : admin의 password를 a로 변경
+- 변경된 비밀번호를 사용해서 admin으로 로그인하면 완료
+![csrf-2-flag](images/Pasted%20image%2020230821220034.png)
+
 ## SQL Injection
 
 ## Command Injection
