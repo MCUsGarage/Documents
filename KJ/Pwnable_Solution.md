@@ -189,3 +189,142 @@
    shell.interactive()
    ```
    - 상기와 같이 공격하는 방법도 존재함.
+
+4. https://icmp-ycdi.tistory.com/51
+
+    - Papa brought me a packed present! let's open it.
+    - Download : http://pwnable.kr/bin/flag
+    - This is reversing task. all you need is binary
+    - 리버싱 문제
+    - wget http://pwnable.kr/bin/flag
+    - I will malloc() and strcpy the flag there. take it.
+    - 3번과 유사한 문제로 추정하여 gdb로 disas 시도
+    - Reading symbols from flag...
+      (No debugging symbols found in flag) -> 일반 c 파일이 아닌것으로 보임
+    - 다른 풀이들을 보니 Packing(압축, 암호화)된 파일로써 Unpacking을 수행해야 한다고 함.
+    - Packing 여부는 아래와 같이 Ghidra와 같은 툴이나 ExeInfo와 같은 툴로 확인 할 수 있다.
+    - Ghidra<br/>
+    ![Ghidra](Image/Q3/UPX.png)
+    - ExeInfo : https://github.com/ExeinfoASL/ASL<br/>
+    ![ExeInfo](Image/Q3/Unpacking.png)
+    - UPX로 Packing 되었다는 것을 확인했으니 Upx 패키지를 설치하여 Unpacking을 시도한다. (Parrot OS에는 내장되어 있음.)
+    - upx -d ./flag
+    ![upx](Image/Q3/UPX_Unpack.png)
+    ![disas](Image/Q3/disas_flag.png)
+    - puts에 들어갈 문자열 주소는 %edi 레지스터에 저장된것으로 보이며, 해당 주소는 0x496658로 보임
+    - (gdb) x/s 0x496658
+    - 0x496658:	"I will malloc() and strcpy the flag there. take it."
+    - flag 프로그램을 출력할때 나오는 문자열이 출력됨.
+    - 디컴파일러를 통해 더 쉽게 볼수 있음 (ghidra)
+    ![decomp](Image/Q3/Decompiler_flag.png)
+    - thunk_FUN_00400326(pvVar1,flag); 이 핵심, flag 변수를 찾기 위해 해당 Disassembly 주소로 접근
+    - 0x496628이 수상하여 해당 내용을 gdb의 x/s로 접근하면 
+    - (gdb) x/s 0x496628
+    - 0x496628:	"UPX...? sounds like a delivery service :)"
+    - 기드라 사용이 불가능하다면 gdb로 디버깅해야함.
+    -    0x0000000000401184 <+32>:	mov    0x2c0ee5(%rip),%rdx        # 0x6c2070 <flag>
+    - 하지만 위와 같이 flag변수가 보일 수 있으니 안심하고 접근 가능함.
+    - 최종적으로 packing & unpacking 툴과 disassembly 툴을 잘 구비하면 분석이 가능하다.
+5. https://icmp-ycdi.tistory.com/52
+   - passcode
+    ```
+    Mommy told me to make a passcode based login system.
+    My initial C code was compiled without any error!
+    Well, there was some compiler warning, but who cares about that?
+
+    ssh passcode@pwnable.kr -p2222 (pw:guest)
+    ```
+    ![ssh](Image/Q4/ssh.png)
+
+    ```Cpp
+    #include <stdio.h>
+    #include <stdlib.h>
+
+    void login(){
+    	int passcode1;
+    	int passcode2;
+
+    	printf("enter passcode1 : ");
+    	scanf("%d", passcode1);
+    	fflush(stdin);
+
+    	// ha! mommy told me that 32bit is vulnerable to bruteforcing :)
+    	printf("enter passcode2 : ");
+            scanf("%d", passcode2);
+
+    	printf("checking...\n");
+    	if(passcode1==338150 && passcode2==13371337){
+                    printf("Login OK!\n");
+                    system("/bin/cat flag");
+            }
+            else{
+                    printf("Login Failed!\n");
+    		exit(0);
+            }
+    }
+
+    void welcome(){
+    	char name[100];
+    	printf("enter you name : ");
+    	scanf("%100s", name);
+    	printf("Welcome %s!\n", name);
+    }
+
+    int main(){
+    	printf("Toddler's Secure Login System 1.0 beta.\n");
+
+    	welcome();
+    	login();
+
+    	// something after login...
+    	printf("Now I can safely trust you that you have credential :)\n");
+    	return 0;	
+    }
+    ```
+    - 위의 코드대로 password를 입력하니 segfault가 발생함
+    ![ssh](Image/Q4/segfault.png)
+    - 이유는 scanf시 저장할 대상 인자에 &가 없어서 발생하는것으로 보임.
+    - 즉 대상 address가 아닌 대상 자체의 값을 address로 쓰기 때문임
+    - 그렇다면 passcode1과 passcode2에 적절한 주소 값을 주고 passcode를 입력하면 문제가 없을것으로 보임
+    ![disas](Image/Q4/disas.png)
+    ![stack](Image/Q4/stack.png)
+    - 이름을 입력하는 변수의 위치는 EBP + -0x70
+    - 두 패스워드의 기준 address 는 mov -0x10(%ebp),%edx
+    - 최종적으로 두 변수의 메모리 offset은 0x60만큼 -> 96만큼 존재
+    - 그러나 char name[100];의 크기만큼 입력 칸 존재!
+    - printf로 passcode1의 주소 공간 만큼 덮을 수 있음, 그런데 넣을 주소값은 어떻게 판단하는가?
+    - https://bbolmin.tistory.com/33
+    - 이를 판단하기 위해서는 PLT와 GOT에 대해 이해할 수 있어야 함.
+    - 간단히 설명하자면 PLT에 담겨진 시스템 라이브러리 호출 시 GOT에 저장된 프로시저의 주소를 확인해야 함.
+    ![stack](Image/Q4/got.png)
+    - 코드를 다시 분석하면 
+    ```Cpp
+        printf("enter passcode1 : ");
+    	scanf("%d", passcode1);
+    	fflush(stdin);
+
+    	// ha! mommy told me that 32bit is vulnerable to bruteforcing :)
+    	printf("enter passcode2 : ");
+            scanf("%d", passcode2);
+
+    	printf("checking...\n");
+    	if(passcode1==338150 && passcode2==13371337){
+                    printf("Login OK!\n");
+                    system("/bin/cat flag");
+            }
+            else{
+                    printf("Login Failed!\n");
+    		exit(0);
+            }
+    ```
+    - scanf 이후에 실핻되는 함수는 fflush임.
+    - 그러나 plt와 got를 이용하자면
+        1. Password1에 fflush의 GOT 주소를 지정 (char[100]을 이용)
+        2. 이후 Password1 scanf를 받을 때 GOT 주소를 변경하게 되므로 system 함수의 GOT 주소를 입력하면 해결이 가능함.
+    - fflush 주소 (gdb) x/i 0x8048430
+   0x8048430 <fflush@plt>:	jmp    *0x804a004
+    - system 프로시저 주소 (gdb) x/i 0x8048460
+   0x8048460 <system@plt>:	jmp    *0x804a010
+    - 그러나 system 프로시저 주소에 직접 접근하지 말고, system에 명령어를 옮겨 넣는 0x080485e3 <+127>:	movl   $0x80487af,(%esp) 위치로 이동해야함.
+    - 고로아래와 같이 풀 수 있음
+    ![solve](Image/Q4/solve.png)
