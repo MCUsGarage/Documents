@@ -130,6 +130,8 @@ https://dreamhack.io/wargame/challenges/17
 
 # Reversing Basic Challenge #2
 
+https://dreamhack.io/wargame/challenges/16
+
 이 문제는 사용자에게 문자열 입력을 받아 정해진 방법으로 입력값을 검증하여 correct 또는 wrong을 출력하는 프로그램이 주어집니다.
 
 해당 바이너리를 분석하여 correct를 출력하는 입력값을 찾으세요!
@@ -165,3 +167,67 @@ https://dreamhack.io/wargame/challenges/17
 해당 주소를 dump 뜨면 아래와 같다. 
 
 ![sol4_3](./img/sol4_3.png)
+
+</br>
+</br>
+
+# Patch
+
+https://dreamhack.io/wargame/challenges/49
+
+flag를 그리는 루틴을 분석하고 가려진 flag를 보이게 해주세요.
+
+</br>
+</br>
+
+## Solution
+
+이번 문제는 exe file을 실행하면 나오는 특정 프로그램에 특정 함수를 멈춰서 답을 찾는 문제이다. 
+
+우선 문제의 exe file을 실행해보자.
+
+![sol5_1](./img/sol5_1.png)
+
+해당 파일을 실행하면, 위와 같은 프로그램이 실행되는데 뭔가 글자가 가려져 있는 것을 확인할 수 있다. 
+
+즉, 저 검은색으로 칠해진 부분을 제거하고 그 안에 있는 문자를 찾으면 되는 문제로 보여진다.
+
+자 그러면 이제 이 프로그램을 x64 dbg에 넣고 F7을 눌러가면서 어느시점에 이 검은색이 칠해지는지 찾아보자.
+
+
+![sol5_2](./img/sol5_2.png)
+
+![sol5_3](./img/sol5_3.png)
+
+위와 같이 UpdateWindow라는 함수를 지나면서 Patch 프로그램 창이 뜨는 것을 확인할 수 있다. 
+
+그러면 이 이후에 특정 시점에 저 검은색 선이 칠해진다고 볼 수 있으므로 계속 F7을 눌러가면서 위치를 특정해보도록 하자.
+
+![sol5_4](./img/sol5_4.png)
+
+![sol5_5](./img/sol5_5.png)
+
+sub_7FF72FB12B80을 지날 때마다 검은 색 선이 생기는 것을 확인할 수 있다. 
+
+우리는 여기서 하나를 유추할 수 있는데 먼저 검은색 선이 칠해지고 나서 글씨가 써지는 것을 알 수 있다. 
+
+그렇다면 이 선이 그어지는 함수를 막아버린다면, 답을 찾을 수 있을 것이다.
+
+![sol5_6](./img/sol5_6.png)
+
+위에서 찾은 0x7FF72FB12B80 함수에 왔다. 
+자 여기서 어떻게 하면 이 함수를 동작하지 않게 할 수 있을까?
+
+바로 함수 시작 부분의 assembly code를 변경하는 것이다. 
+
+ret로 변경한다면, 함수 진입과 동시에 리턴할 것 이다.
+
+![sol5_7](./img/sol5_7.png)
+
+위와 같이 해당 주소의 assembly code를 변경하였다. 
+
+이 상태에서 F9를 눌러 프로그램 Run을 시켜보자.
+
+![sol5_8](./img/sol5_8.png)
+
+위와 같이 숨겨져 있던 답이 나오게 된다. 
