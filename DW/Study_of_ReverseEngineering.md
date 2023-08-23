@@ -149,3 +149,13 @@ ISA(Instruction Set Architecture) : 명령어 집합구조
 * 메모리 (Memory)
 
 ![assembly2](./img/assembly_2.png)
+
+자료형 WORD의 크기가 2byte인 이유
+
+초기에 인텔은 WORD 크기가 16bit인 IA-16 아키텍쳐를 개발하였다. 그렇기 때문에 어셈블리어에서도 WORD를 16bit 자료형으로 정의하는 것이 자연스러웠다.
+
+이후에 개발된 IA-32, x86-64 아키텍쳐는 CPU의 WORD가 32bit, 64bit로 확장되었다. 
+
+그러나 인텔은 WORD 자료형 크기를 16bit로 유지했다. 왜냐면 자료형 크기를 변경하면 기존 프로그램 호환이 어려웠기 때문이다.
+
+그래서 WORD 자료형은 그대로 유지하고, DWORD(Double Word, 32bit), QWORD(Quad Word, 64bit)자료형을 추가로 만들었다.
