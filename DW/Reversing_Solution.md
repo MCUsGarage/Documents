@@ -231,3 +231,78 @@ ret로 변경한다면, 함수 진입과 동시에 리턴할 것 이다.
 ![sol5_8](./img/sol5_8.png)
 
 위와 같이 숨겨져 있던 답이 나오게 된다. 
+
+</br>
+</br>
+</br>
+
+# 6 Reversing Basic Challenge #4
+
+https://dreamhack.io/wargame/challenges/18
+
+이 문제는 사용자에게 문자열 입력을 받아 정해진 방법으로 입력값을 검증하여 correct 또는 wrong을 출력하는 프로그램이 주어집니다.
+
+해당 바이너리를 분석하여 correct를 출력하는 입력값을 알아내세요.
+
+획득한 입력값은 DH{} 포맷에 넣어서 인증해주세요.
+
+예시) 입력 값이 Apple_Banana일 경우 flag는 DH{Apple_Banana}
+
+## Solution
+
+이 문제는 앞에서 계속해서 풀었던 문제와 거의 유사한 문제이다.
+
+이 문제도 결국 x64 dbg를 가지고 input symbol쪽으로 찾아 들어가서 decompiler를 돌려보면 실마리를 찾을 수 있다. 
+
+![sol6_1](./img/sol6_1.png)
+
+위 영역이 input 쪽 아래에 input과 특정 값을 비교하는 함수의 구현부이다. 
+
+이 부분을 decompiler로 돌려보자.
+
+
+![sol6_2](./img/sol6_2.png)
+
+해당 함수를 살펴보면, if 조건문에 있는 내용을 해석해보면 문제를 풀 수 있다는 것을 알 수 있다. 
+
+조건문은  
+
+```c
+if (((uint32_t)((int32_t)static_cast<uint32_t>(*reinterpret_cast<uint8_t*>(v2 + v3)) >> 4) | static_cast<uint32_t>(*reinterpret_cast<uint8_t*>(v2 + v3)) << 4 & 0xf0) != static_cast<uint32_t>(*reinterpret_cast<uint8_t*>(0x7ff7e9123000 + v3))) 
+```
+
+이 조건을 해석해보면, ( 16 * a1[i] )  ||  (a1[i] >> 4 ) != 0x7ff7e9123000[i] 이다.
+
+심플하다. 
+
+이제 이걸 a1[i]에 관해서 치환한 다음에 코드로 역연산을 때리면 된다.
+
+그리고 0x7ff7e9123000에 들어있는 데이터도 참조하자.
+
+![sol6_3](./img/sol6_3.png)
+
+이제 이 데이터를 가지고 역연산 코드를 작성해보자.
+
+```c
+#include <stdio.h>
+
+int main(){
+    int _array[27] = 
+    {
+        0x24, 0x27, 0x13, 0xC6, 0xC6, 0x13, 0x16, 0xE6, 0x47, 0xF5,
+        0x26, 0x96, 0x47, 0xF5, 0x46, 0x27, 0x13, 0x26, 0x26, 0xC6,
+        0x56, 0xF5, 0xC3, 0xC3, 0xF5, 0xE3, 0xE3
+    };
+
+    for(int i = 0; i < 27; i++)
+    {
+        printf("%c", (16 * _array[i]) & 0xF0 | (_array[i] >> 4));
+    }
+    
+    return 0;
+}
+```
+
+해당 코드를 돌리면 아래와 같이 정답을 발견할 수 있다. 
+
+![sol6_4](./img/sol6_4.png)
