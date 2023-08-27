@@ -334,7 +334,7 @@
     <br/>
 
 
-    1. https://icmp-ycdi.tistory.com/61
+6. https://icmp-ycdi.tistory.com/61
 
     - Daddy, teach me how to use random value in programming!
         ssh random@pwnable.kr -p2222 (pw:guest)
@@ -393,3 +393,271 @@
     Good!
     Mommy, I thought libc random is unpredictable...
     ```
+
+
+7. https://jaimelightfoot.com/blog/pwnable-kr-input-walkthrough/
+   - Mom? how can I pass my input to a computer program?
+   - ssh input2@pwnable.kr -p2222 (pw:guest)
+    ```Cpp
+    #include <stdio.h>
+    #include <stdlib.h>
+    #include <string.h>
+    #include <sys/socket.h>
+    #include <arpa/inet.h>
+
+    int main(int argc, char* argv[], char* envp[]){
+    	printf("Welcome to pwnable.kr\n");
+    	printf("Let's see if you know how to give input to program\n");
+    	printf("Just give me correct inputs then you will get the flag :)\n");
+
+    	// argv
+    	if(argc != 100) return 0;
+    	if(strcmp(argv['A'],"\x00")) return 0; //0x00
+    	if(strcmp(argv['B'],"\x20\x0a\x0d")) return 0; //0x0d0a20
+    	printf("Stage 1 clear!\n");	
+
+    	// stdio
+    	char buf[4];
+    	read(0, buf, 4);
+    	if(memcmp(buf, "\x00\x0a\x00\xff", 4)) return 0; // 0xff000a00
+    	read(2, buf, 4);
+            if(memcmp(buf, "\x00\x0a\x02\xff", 4)) return 0; // 0x000a02ff
+    	printf("Stage 2 clear!\n");
+    
+    	// env
+    	if(strcmp("\xca\xfe\xba\xbe", getenv("\xde\xad\xbe\xef")))
+            return 0;//0xefebadde
+    	printf("Stage 3 clear!\n");
+
+    	// file
+    	FILE* fp = fopen("\x0a", "r");
+    	if(!fp) return 0;
+    	if( fread(buf, 4, 1, fp)!=1 ) return 0;
+    	if( memcmp(buf, "\x00\x00\x00\x00", 4) ) return 0;
+            //0x00000000
+    	fclose(fp);
+    	printf("Stage 4 clear!\n");	
+
+    	// network
+    	int sd, cd;
+    	struct sockaddr_in saddr, caddr;
+    	sd = socket(AF_INET, SOCK_STREAM, 0);
+    	if(sd == -1){
+    		printf("socket error, tell admin\n");
+    		return 0;
+    	}
+    	saddr.sin_family = AF_INET;
+    	saddr.sin_addr.s_addr = INADDR_ANY;
+    	saddr.sin_port = htons( atoi(argv['C']) );
+    	if(bind(sd, (struct sockaddr*)&saddr, sizeof(saddr)) < 0){
+    		printf("bind error, use another port\n");
+        		return 1;
+    	}
+    	listen(sd, 1);
+    	int c = sizeof(struct sockaddr_in);
+    	cd = accept(sd, (struct sockaddr *)&caddr, (socklen_t*)&c);
+    	if(cd < 0){
+    		printf("accept error, tell admin\n");
+    		return 0;
+    	}
+    	if( recv(cd, buf, 4, 0) != 4 ) return 0;
+    	if(memcmp(buf, "\xde\xad\xbe\xef", 4)) return 0;
+            //0xefbeadde
+    	printf("Stage 5 clear!\n");
+
+    	// here's your flag
+    	system("/bin/cat flag");	
+    	return 0;
+    }
+    ```
+    - 원하는 input값을 넣어서 각 stage들을 clear 하여 flag를 얻는다.
+    - Stage 1
+    ```Cpp
+        	// argv
+    	if(argc != 100) return 0;
+    	if(strcmp(argv['A'],"\x00")) return 0; //0x00
+    	if(strcmp(argv['B'],"\x20\x0a\x0d")) return 0; //0x0d0a20
+    	printf("Stage 1 clear!\n");	
+    ```
+    - argc 100개 (즉 인자 수 99개)
+    - A에는 0x00, B에는 0x0d0a20 넣으면 됨.
+    - ascii 상 A는 65 B는 66
+    ```Python
+    from pwn import *
+    argv = ['A' for i in range(100)]
+    argv[65] = '\x00'
+    argv[66] = '\x20\x0a\x0d'
+    p = process(executable='/home/input2/input', argv=argv)
+    print(p.recvuntil("clear!\n"))
+    p.interactive()
+    ```
+    - stage 2
+    ```Cpp
+    	// stdio
+    char buf[4];
+    read(0, buf, 4);
+    if(memcmp(buf, "\x00\x0a\x00\xff", 4)) return 0; // 0xff000a00
+    read(2, buf, 4);
+    if(memcmp(buf, "\x00\x0a\x02\xff", 4)) return 0; // 0x000a02ff
+    printf("Stage 2 clear!\n");
+    ```
+    - 이전에 다룬 read의 내용 https://man7.org/linux/man-pages/man2/read.2.html
+    - 0 :stdin 1:stdout 2:stderr ~
+    - stdin과 stderr로 각 값을 입력
+    ```Python
+    from pwn import *
+    #s1
+    argv = ['A' for i in range(100)]
+
+    argv[65] = '\x00'
+    argv[66] = '\x20\x0a\x0d'
+
+    #s2 stderr
+    sterr = open("sterr","w")
+    sterr.write("\x00\x0a\x02\xff")
+
+    sterr = open("sterr","r")
+
+    p = process(executable='/home/input2/input',stderr=sterr, argv=argv)
+
+    print(p.recvuntil("1 clear!\n"))
+    #s2 stdin
+    p.send("\x00\x0a\x00\xff")
+    print(p.recvuntil("2 clear!\n"))
+
+    p.interactive()
+    ```
+    - stage 3
+    ```Cpp
+        	// env
+    	if(strcmp("\xca\xfe\xba\xbe", getenv("\xde\xad\xbe\xef")))
+            return 0;//0xefebadde
+    	printf("Stage 3 clear!\n");
+    ```
+    - env로 값을 받음.
+    - process 실행 시 env로 값을 받음.
+    - 환경 변수도 보낼수 있으며, key 0xefebadde 에 대한 값으로 0xbebafeca
+    - 파이썬에서는 딕셔너리 형태로 값을 넣음
+
+    ```python
+    from pwn import *
+    #s1
+    argv = ['A' for i in range(100)]
+
+    argv[65] = '\x00'
+    argv[66] = '\x20\x0a\x0d'
+
+    #s2 stderr
+    sterr = open("sterr","w")
+    sterr.write("\x00\x0a\x02\xff")
+
+    sterr = open("sterr","r")
+
+    #s3 env
+    envs = {'\xde\xad\xbe\xef':'\xca\xfe\xba\xbe'}
+
+
+    p = process(executable='/home/input2/input',stderr=sterr, argv=argv, env=envs)
+
+    print(p.recvuntil("1 clear!\n"))
+    #s2 stdin
+    p.send("\x00\x0a\x00\xff")
+    print(p.recvuntil("2 clear!\n"))
+    print(p.recvuntil("3 clear!\n"))
+
+    p.interactive()
+
+    ```
+    - stage 4
+    ```Cpp
+    	// file
+	FILE* fp = fopen("\x0a", "r");
+	if(!fp) return 0;
+	if( fread(buf, 4, 1, fp)!=1 ) return 0;
+	if( memcmp(buf, "\x00\x00\x00\x00", 4) ) return 0;
+        //0x00000000
+	fclose(fp);
+	printf("Stage 4 clear!\n");	
+    ```
+    - 파일 인풋
+    - \0xa 파일 안에 \x00\x00\x00\x00를 넣으면 됨.
+
+    - stage 5
+    ```Cpp
+    	// network
+    	int sd, cd;
+    	struct sockaddr_in saddr, caddr;
+    	sd = socket(AF_INET, SOCK_STREAM, 0);
+    	if(sd == -1){
+    		printf("socket error, tell admin\n");
+    		return 0;
+    	}
+    	saddr.sin_family = AF_INET;
+    	saddr.sin_addr.s_addr = INADDR_ANY;
+    	saddr.sin_port = htons( atoi(argv['C']) );
+    	if(bind(sd, (struct sockaddr*)&saddr, sizeof(saddr)) < 0){
+    		printf("bind error, use another port\n");
+        		return 1;
+    	}
+    	listen(sd, 1);
+    	int c = sizeof(struct sockaddr_in);
+    	cd = accept(sd, (struct sockaddr *)&caddr, (socklen_t*)&c);
+    	if(cd < 0){
+    		printf("accept error, tell admin\n");
+    		return 0;
+    	}
+    	if( recv(cd, buf, 4, 0) != 4 ) return 0;
+    	if(memcmp(buf, "\xde\xad\xbe\xef", 4)) return 0;
+            //0xefbeadde
+    	printf("Stage 5 clear!\n");
+    ```
+    - 소켓 통신
+    - port값은 argv 67번에 넣으면 됨.
+    - 이후 소켓 생성을 한 후에 0xefbeadde를 넣으면 됨.
+
+    -최종 솔루션은 아래와 같음
+    ```Python
+    from pwn import *
+    #s1
+    argv = ['A' for i in range(100)]
+
+    argv[65] = '\x00'
+    argv[66] = '\x20\x0a\x0d'
+
+    #s5 socket
+    argv[67] = '6666'
+
+    #s2 stderr
+    sterr = open("sterr","w")
+    sterr.write("\x00\x0a\x02\xff")
+
+    sterr = open("sterr","r")
+
+    #s3 env
+    envs = {'\xde\xad\xbe\xef':'\xca\xfe\xba\xbe'}
+
+    #s4
+    finput = open("\x0a","w")
+    finput.write("\x00\x00\x00\x00")
+    finput.close()
+
+    p = process(executable='/home/input2/input',stderr=sterr, argv=argv, env=envs)
+
+    print(p.recvuntil("1 clear!\n"))
+    #s2 stdin
+    p.send("\x00\x0a\x00\xff")
+    print(p.recvuntil("2 clear!\n"))
+    print(p.recvuntil("3 clear!\n"))
+    print(p.recvuntil("4 clear!\n"))
+
+    sleep(3)
+
+    socket_input = remote('localhost',6666)
+    socket_input.send('\xde\xad\xbe\xef')
+    print(p.recvuntil("5 clear!\n"))
+    p.interactive()
+    ```
+    - 이때 상기 실행 파일을 실행시킬 때 두가지 주의점이 있음
+    1. 제공된 디렉토리에는 파일 rw 권한이 없어 /tmp/<target folder> 에서 작성해야 함.
+    2. 해당 폴더에 flag의 symlink 를 만들어 접근
+        - ln -s /home/input2/flag flag
