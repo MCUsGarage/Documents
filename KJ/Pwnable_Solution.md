@@ -32,9 +32,10 @@
    - 고로 인자로 0x1234 -> 4660 입력 후 LETMEWIN 입력
    - cat flag를 하면 permission denied가 발생하지만, system 함수는 터미널 제어권을 루트 권한으로 가져갈 수 있는 함수이므로 매우 강력하게 사용될 수 있음. (Command Injection)
    - https://velog.io/@aqaqsubin/Linux-system-%EB%AC%B8%EC%A0%9C%EC%A0%90
+  <br/>
 
 
-2. https://icmp-ycdi.tistory.com/49
+1. https://icmp-ycdi.tistory.com/49
     ```Cpp
     #include
     #include
@@ -78,7 +79,7 @@
    - 고로 가장 쉬운 방법을 따르자면 아래와 같음 (ascii 코드 상 문제만 없으면 숫자는 바뀔 수 있음.)
    - ./col `python -c 'print "\xC8\xCE\xC5\x06"*4+"\xcc\xce\xc5\x06"'`
    - 단 x86 시스템은 Little endian 을 사용하기 때문에 위와 같이 입력해줘야 함.
-   - 참고로 python에서 print "\x41" 을 출력하면 ASCII값을 기준으로 A를 출력하므로 참고할 것
+   - 참고로 python에서 print "\x41" 을 출력하면 ASCII값을 기준으로 A를 출력하므로 참고할 것<br/>
 
 
 3. https://icmp-ycdi.tistory.com/50
@@ -188,7 +189,7 @@
    shell.send(payload)
    shell.interactive()
    ```
-   - 상기와 같이 공격하는 방법도 존재함.
+   - 상기와 같이 공격하는 방법도 존재함.<br/>
 
 4. https://icmp-ycdi.tistory.com/51
 
@@ -204,19 +205,19 @@
     - 다른 풀이들을 보니 Packing(압축, 암호화)된 파일로써 Unpacking을 수행해야 한다고 함.
     - Packing 여부는 아래와 같이 Ghidra와 같은 툴이나 ExeInfo와 같은 툴로 확인 할 수 있다.
     - Ghidra<br/>
-    ![Ghidra](Image/Q3/UPX.png)
+    ![Ghidra](Image/Q4/UPX.png)
     - ExeInfo : https://github.com/ExeinfoASL/ASL<br/>
-    ![ExeInfo](Image/Q3/Unpacking.png)
+    ![ExeInfo](Image/Q4/Unpacking.png)
     - UPX로 Packing 되었다는 것을 확인했으니 Upx 패키지를 설치하여 Unpacking을 시도한다. (Parrot OS에는 내장되어 있음.)
     - upx -d ./flag
-    ![upx](Image/Q3/UPX_Unpack.png)
-    ![disas](Image/Q3/disas_flag.png)
+    ![upx](Image/Q4/UPX_Unpack.png)
+    ![disas](Image/Q4/disas_flag.png)
     - puts에 들어갈 문자열 주소는 %edi 레지스터에 저장된것으로 보이며, 해당 주소는 0x496658로 보임
     - (gdb) x/s 0x496658
     - 0x496658:	"I will malloc() and strcpy the flag there. take it."
     - flag 프로그램을 출력할때 나오는 문자열이 출력됨.
     - 디컴파일러를 통해 더 쉽게 볼수 있음 (ghidra)
-    ![decomp](Image/Q3/Decompiler_flag.png)
+    ![decomp](Image/Q4/Decompiler_flag.png)
     - thunk_FUN_00400326(pvVar1,flag); 이 핵심, flag 변수를 찾기 위해 해당 Disassembly 주소로 접근
     - 0x496628이 수상하여 해당 내용을 gdb의 x/s로 접근하면 
     - (gdb) x/s 0x496628
@@ -224,7 +225,9 @@
     - 기드라 사용이 불가능하다면 gdb로 디버깅해야함.
     -    0x0000000000401184 <+32>:	mov    0x2c0ee5(%rip),%rdx        # 0x6c2070 <flag>
     - 하지만 위와 같이 flag변수가 보일 수 있으니 안심하고 접근 가능함.
-    - 최종적으로 packing & unpacking 툴과 disassembly 툴을 잘 구비하면 분석이 가능하다.
+    - 최종적으로 packing & unpacking 툴과 disassembly 툴을 잘 구비하면 분석이 가능하다.<br/>
+
+
 5. https://icmp-ycdi.tistory.com/52
    - passcode
     ```
@@ -234,7 +237,7 @@
 
     ssh passcode@pwnable.kr -p2222 (pw:guest)
     ```
-    ![ssh](Image/Q4/ssh.png)
+    ![ssh](Image/Q5/ssh.png)
 
     ```Cpp
     #include <stdio.h>
@@ -282,12 +285,12 @@
     }
     ```
     - 위의 코드대로 password를 입력하니 segfault가 발생함
-    ![ssh](Image/Q4/segfault.png)
+    ![ssh](Image/Q5/segfault.png)
     - 이유는 scanf시 저장할 대상 인자에 &가 없어서 발생하는것으로 보임.
     - 즉 대상 address가 아닌 대상 자체의 값을 address로 쓰기 때문임
     - 그렇다면 passcode1과 passcode2에 적절한 주소 값을 주고 passcode를 입력하면 문제가 없을것으로 보임
-    ![disas](Image/Q4/disas.png)
-    ![stack](Image/Q4/stack.png)
+    ![disas](Image/Q5/disas.png)
+    ![stack](Image/Q5/stack.png)
     - 이름을 입력하는 변수의 위치는 EBP + -0x70
     - 두 패스워드의 기준 address 는 mov -0x10(%ebp),%edx
     - 최종적으로 두 변수의 메모리 offset은 0x60만큼 -> 96만큼 존재
@@ -296,7 +299,7 @@
     - https://bbolmin.tistory.com/33
     - 이를 판단하기 위해서는 PLT와 GOT에 대해 이해할 수 있어야 함.
     - 간단히 설명하자면 PLT에 담겨진 시스템 라이브러리 호출 시 GOT에 저장된 프로시저의 주소를 확인해야 함.
-    ![stack](Image/Q4/got.png)
+    ![stack](Image/Q5/got.png)
     - 코드를 다시 분석하면 
     ```Cpp
         printf("enter passcode1 : ");
@@ -326,5 +329,67 @@
     - system 프로시저 주소 (gdb) x/i 0x8048460
    0x8048460 <system@plt>:	jmp    *0x804a010
     - 그러나 system 프로시저 주소에 직접 접근하지 말고, system에 명령어를 옮겨 넣는 0x080485e3 <+127>:	movl   $0x80487af,(%esp) 위치로 이동해야함.
-    - 고로아래와 같이 풀 수 있음
-    ![solve](Image/Q4/solve.png)
+    - 고로 아래와 같이 풀 수 있음<br/>
+    ![solve](Image/Q5/solve.png)<br/>
+    <br/>
+
+
+    1. https://icmp-ycdi.tistory.com/61
+
+    - Daddy, teach me how to use random value in programming!
+        ssh random@pwnable.kr -p2222 (pw:guest)
+    
+    ```Cpp
+    #include <stdio.h>
+
+    int main(){
+            unsigned int random;
+            random = rand();        // random value!
+
+            unsigned int key=0;
+            scanf("%d", &key);
+
+            if( (key ^ random) == 0xdeadbeef ){
+                    printf("Good!\n");
+                    system("/bin/cat flag");
+                    return 0;
+            }
+
+            printf("Wrong, maybe you should try 2^32 cases.\n");
+            return 0;
+    }
+    ```
+    - rand의 값을 찾아야함!
+    - rand함수의 random 값은 컴파일 시 값이 정해짐 
+    - srand는 이를 보안하기 위해 seed 값을 이용해 값을 변화시킬 수 있음.
+    - 이미 컴파일된 rand의 값을 찾기 위해 gdb의 breakpoint 이용
+    ```shell
+    0x00000000004005f4 <+0>:	push   %rbp
+    0x00000000004005f5 <+1>:	mov    %rsp,%rbp
+    0x00000000004005f8 <+4>:	sub    $0x10,%rsp
+    0x00000000004005fc <+8>:	mov    $0x0,%eax
+    0x0000000000400601 <+13>:	call   0x400500 <rand@plt>
+    0x0000000000400606 <+18>:	mov    %eax,-0x4(%rbp)
+    0x0000000000400609 <+21>:	movl   $0x0,-0x8(%rbp)
+    0x0000000000400610 <+28>:	mov    $0x400760,%eax
+    ```
+    - rand함수의 결과를 eax 레지스터로부터 400760에 저장하는것으로 보임
+    - 이를 확인하기 위해 eax 값을 0x400760에 저장하기 전에 break를 걸고 eax 레지스터 값을 확인함.
+    ```shell
+    (gdb) b* 0x0000000000400609
+    Breakpoint 1 at 0x400609
+    (gdb) r
+    Starting program: /home/parrot/Desktop/Q5/random 
+
+    Breakpoint 1, 0x0000000000400609 in main ()
+    (gdb) info register $eax
+    eax            0x6b8b4567          1804289383
+    ```
+    - 0x6B8B4567과 KEY 값의 xor 연산의 결과가 0xdeadbeef
+    - key 값은 0xb526fb88 = 3039230856
+    ```shell
+    random@pwnable:~$ ./random 
+    3039230856
+    Good!
+    Mommy, I thought libc random is unpredictable...
+    ```
