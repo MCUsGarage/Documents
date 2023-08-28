@@ -306,3 +306,59 @@ int main(){
 해당 코드를 돌리면 아래와 같이 정답을 발견할 수 있다. 
 
 ![sol6_4](./img/sol6_4.png)
+
+
+# 7 Reversing Basic Challenge #5
+
+이 문제는 사용자에게 문자열 입력을 받아 정해진 방법으로 입력값을 검증하여 correct 또는 wrong을 출력하는 프로그램이 주어집니다.
+
+해당 바이너리를 분석하여 correct를 출력하는 입력값을 찾으세요!
+
+획득한 입력값은 DH{} 포맷에 넣어서 인증해주세요.
+
+예시) 입력 값이 Apple_Banana일 경우 flag는 DH{Apple_Banana}
+
+https://dreamhack.io/wargame/challenges/19
+
+## Solution
+
+이 문제는 Reversing Basic Challenge 시리즈 문제와 형식이나 방식이 똑같으므로 문제풀이의 앞부분은 건너 뛰고, 핵심인 Input string value 판정 부분을 세밀하게 보도록 하겠다. 
+
+앞 서 다른 문제와 마찬가지로 Input 뒤에 판단하는 함수로 들어가서 해당 함수를 Decompiler로 돌려보면 아래와 같다.
+
+![sol7_1](./img/sol7_1.png)
+
+Decompilering된 부분을 자세히 살펴보면, i번지, i+1번지 데이터가 들어와서 특정 주소에 있는 결과와 같은지를 확인하는 코드이다.
+
+자 먼저 그럼 비교되는 값은 무엇인지 메모리 맵을 통해 찾아보자.
+
+해당 값은 0x7ff693c83000에 있을 것 이다.
+
+![sol7_2](./img/sol7_2.png)
+
+비교 대상이 되는 값은 위와 같다. 
+
+해당 문제를 해결해기 위해 역연산 코드는 아래와 같이 짤 수 있다. 
+
+```c
+#include <stdio.h>
+int main(){
+    int src[0x18] = {0xAD, 0xD8, 0xCB, 0xCB, 0x9D, 0x97,
+    0xCB, 0xC4, 0x92, 0xA1, 0xD2, 0xD7, 0xD2, 0xD6, 
+    0xA8, 0xA5, 0xDC, 0xC7, 0xAD, 0xA3, 0xA1, 0x98,
+    0x4C, 0x00};
+
+    int str[0x18+1]={0,};
+
+    for(int i=0x18-1; i>=0; i--){
+        str[i]=src[i]-str[i+1];
+    }
+
+    for(int i=0; i<0x18; i++){
+        printf("%c", str[i]);
+    }
+}
+```
+해당 함수를 실행시키면 아래와 같이 결과를 얻을 수 있게 된다. 
+
+![sol7_3](./img/sol7_3.png)
