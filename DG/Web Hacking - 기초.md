@@ -764,6 +764,70 @@ if __name__ == "__main__":
 
 ## Command Injection
 
+시스템 명령어를 실행하는 함수에 인자로 임의의 명령어를 넣어서 발생
+- 유저가 임의의 인자를 전달할 떄 메타 문자 (&&, | 등) 를 사용해서 추가적인 행동을 발생시킴
+- 방어하기 위해선 입력값을 반드시 검사해야함
+
+```python
+@app.route('/ping')
+def ping():
+	ip = request.args.get('ip') 
+	return os.system(f'ping -c 3 {ip}')
+```
+- `/ping?ip=&&%20id`  이런방식으로 넣으면 `ping -c 3 && id` 로 인식함
+- `;`. `|` 등 다른 메타 문자도 가능
+
+### wargame
+
+Command Injection을 통해 플래그를 획득하세요. 플래그는 `flag.py`에 있습니다.
+```python
+  
+@APP.route('/ping', methods=['GET', 'POST'])
+def ping():
+	if request.method == 'POST':
+		host = request.form.get('host')
+		cmd = f'ping -c 3 "{host}"'
+		try:
+			output = subprocess.\
+				check_output(['/bin/sh', '-c', cmd], timeout=5)
+			return render_template(
+				'ping_result.html',
+				data=output.decode('utf-8'))
+		except subprocess.TimeoutExpired:
+			return render_template('ping_result.html', data='Timeout !')
+		except subprocess.CalledProcessError:
+			return render_template(
+				'ping_result.html',
+				data=f'an error occurred while\
+					 executing the command. -> {cmd}')
+	 
+	return render_template('ping.html')
+```
+
+![command-injection-1](images/Pasted%20image%2020230829202824.png)
+- 템플릿에 명령어 입력. 거부당함
+
+![command-injection-2](images/Pasted%20image%2020230829202855.png)
+- 개발자 도구에서 해당 태그 확인. pattern으로 막은 것 확인
+- `pattern="[A-za-z0-9.]{5,20}"` 이부분 삭제하고 다시 ping 입력
+
+![command-injection-3](images/Pasted%20image%2020230829203135.png)
+- 명령어는 들어가는 것을 확인할수 있음
+- 하지만 쌍따옴표가 들어가서 커맨드 에러 발생
+
+![command-injection-4](images/Pasted%20image%2020230829203441.png)
+- 쌍따옴표 추가해서 값을 인식할수 있도록 명령어 변경
+
+![command-injection-5](images/Pasted%20image%2020230829203524.png)
+- ls 명령어로 flag.py 파일 확인
+
+![command-injection-6](images/Pasted%20image%2020230829203633.png)
+- 같은 방식으로 flag.py 파일 확인
+
+![command-injection-7](images/Pasted%20image%2020230829203727.png)
+- 플래그 획득
+
+
 ## File Vulnerability
 
 ## SSRF - Server Side Request Forgery 
