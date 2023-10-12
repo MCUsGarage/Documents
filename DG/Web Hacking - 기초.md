@@ -919,3 +919,101 @@ flag.py를 다운로드 받으면 플래그를 획득할 수 있습니다.
 
 ## SSRF - Server Side Request Forgery 
 
+웹 서비스 권한으로 변조된 요청을 보내는 취약점
+- 외부에서 접근할수 없는 내부망 서비스와 통신할 수 있음. -> 간접적으로 내부망 사용
+- 요청(request) 내 유저의 입력값 포함되어야함
+
+취약점 1. 유저가 입력한 URL에 요청 보냄
+
+ex)
+```python
+from flask 
+import Flask, request import requests
+app = Flask(__name__)
+
+@app.route("/image_downloader")
+def image_downloader(): 
+	# 이용자가 입력한 URL에 HTTP 요청을 보내고 응답을 반환하는 페이지 입니다.
+	image_url = request.args.get("image_url", "") 
+	# URL 파라미터에서 image_url 값을 가져옵니다. 
+	response = requests.get(image_url)
+	# requests 라이브러리를 사용해서 image_url URL에 HTTP GET 메소드 요청을 보내고 결과를 response에 저장합니다.
+	return ( # 아래의 3가지 정보를 반환합니다.
+		response.content, # HTTP 응답으로 온 데이터
+		200, # HTTP 응답 코드 
+		{"Content-Type": response.headers.get("Content-Type", "")}, # HTTP 응답으로 온 헤더 중 Content-Type(응답 내용의 타입) 
+	)
+
+@app.route("/request_info")
+def request_info(): # 접속한 브라우저(User-Agent)의 정보를 출력하는 페이지 입니다. 
+	return request.user_agent.string
+	
+app.run(host="127.0.0.1", port=8000)
+```
+- image_downloader에 image_url을 그대로 사용함
+	- image_url에 `http://127.0.0.1:8000/request_info` 를 넣어서 요청을 보내면 유저가 직접 페이지에 접속한것과 다른 결과가 반환됨 (서버의 user_agent 가 나옴)
+
+취약점 2. 요청 보낼 URL에 유저id 와 같은 내용이 포함
+
+ex)
+```python
+INTERNAL_API = "http://api.internal/"
+# INTERNAL_API = "http://172.17.0.3/"
+@app.route("/v1/api/user/information")
+def user_info(): 
+	user_idx = request.args.get("user_idx", "") 
+	response = requests.get(f"{INTERNAL_API}/user/{user_idx}")
+
+@app.route("/v1/api/user/search")
+def user_search():
+	user_name = request.args.get("user_name", "") 
+	user_type = "public" 
+	response = requests.get(f"{INTERNAL_API}/user/search?user_name={user_name}&user_type={user_type}")
+
+```
+- url의 입력값을 변조할수있음
+	- user_info에서 user_idx 값에 `../search` 같이 입력 가능(path traversal)
+	- `#` 문자를 넣어서 경로 조작 가능 user_search에서 user_name 값에 `secret&user_type=private#` 를 넣는 경우 user_type 부분은 무시됨
+
+취약점 3. 유저가 입력한 값이 HTTP body에 포함
+
+```python
+  
+INTERNAL_API = "http://127.0.0.1:8000/"
+header = {"Content-Type": "application/x-www-form-urlencoded"}
+
+
+@app.route("/v1/api/board/write", methods=["POST"])
+def board_write():
+	session["idx"] = "guest" # session idx를 guest로 설정합니다.
+	title = request.form.get("title", "") # title 값을 form 데이터에서 가져옵니다.
+	body = request.form.get("body", "") # body 값을 form 데이터에서 가져옵니다. 
+	data = f"title={title}&body={body}&user={session['idx']}" # 전송할 데이터를 구성합니다. 
+	response = requests.post(f"{INTERNAL_API}/board/write", headers=header, data=data) # INTERNAL API 에 이용자가 입력한 값을 HTTP BODY 데이터로 사용해서 요청합니다. 
+	return response.content # INTERNAL API 의 응답 결과를 반환합니다.
+
+
+@app.route("/board/write", methods=["POST"])
+def internal_board_write():
+	# form 데이터로 입력받은 값을 JSON 형식으로 반환합니다. 
+	title = request.form.get("title", "") 
+	body = request.form.get("body", "")
+	user = request.form.get("user", "") 
+	info = { "title": title, "body": body, "user": user, } 
+	return info
+
+@app.route("/")
+def index():
+	# board_write 기능을 호출하기 위한 페이지입니다.
+	return """
+	 <form action="/v1/api/board/write" method="POST"> 
+		 <input type="text" placeholder="title" name="title"/><br/> 
+		 <input type="text" placeholder="body" name="body"/><br/> 
+		 <input type="submit"/> 
+	 </form> 
+	"""
+```
+- 파라미터에 `&`을 포함하면 data 값 변조가능
+	- `data = f"title={title}&body={body}&user={session['idx']}"` 
+	- 이부분에서 title에 `title&user=admin` 이런식으로 넣게 된다면 변조할수 있음
+	
