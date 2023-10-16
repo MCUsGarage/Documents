@@ -118,3 +118,73 @@
 
 
 # x86 Assembly
+
+Operation Code (Opcode)
+
+|명령 코드 분류|명령어 종류 |
+|---|---|
+|데이터 이동(Data Transfer)|`mov`, `lea`|
+|산술 연산(Arithmetic)|`inc`, `dec`, `add`, `sub`|
+|논리 연산(Logical)|`and`, `or`, `xor`, `not`|
+|비교(Comparison)|`cmp`, `test`|
+|분기(Branch)|`jmp`, `je`, `jg`|
+|스택(Stack)|`push`, `pop`|
+|프로시져(Procedure)|`call`, `ret`, `leave`|
+|시스템 콜(System call)|`syscall`|
+- 이외에도 다른 명령 코드가 있음
+
+Operand 
+
+- 상수(Immediate Value)
+- 레지스터(Register)
+- 메모리(Memory)
+
+
+
+Question 1
+ end로 점프하면 프로그램이 종료된다고 가정하자. 프로그램이 종료됐을 때, 0x400000 부터 0x400019까지의 데이터를 대응되는 아스키 문자로 변환하면 어느 문자열이 나오는가?
+
+```
+[Register]
+rcx = 0
+rdx = 0
+rsi = 0x400000
+=======================
+[Memory]
+0x400000 | 0x67 0x55 0x5c 0x53 0x5f 0x5d 0x55 0x10
+0x400008 | 0x44 0x5f 0x10 0x51 0x43 0x43 0x55 0x5d
+0x400010 | 0x52 0x5c 0x49 0x10 0x47 0x5f 0x42 0x5c
+0x400018 | 0x54 0x11 0x00 0x00 0x00 0x00 0x00 0x00
+=======================
+[code]
+1: mov dl, BYTE PTR[rsi+rcx]
+2: xor dl, 0x30
+3: mov BYTE PTR[rsi+rcx], dl
+4: inc rcx
+5: cmp rcx, 0x19
+6: jg end
+7: jmp 1
+
+```
+- code를 보면 한 바이트씩 읽어서 0x30 값과 xor  시키는데 총 19번 반복 시키는 걸 알 수 있다.
+- 이를 파이썬으로 작성하면 다음과 같다.
+
+```python
+def main():
+	arr = [
+		0x67, 0x55, 0x5c, 0x53, 0x5f, 0x5d, 0x55, 0x10,
+		0x44, 0x5f, 0x10, 0x51, 0x43, 0x43, 0x55, 0x5d,
+		0x52, 0x5c, 0x49, 0x10, 0x47, 0x5f, 0x42, 0x5c,
+		0x54, 0x11, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+	
+
+    for i in range(19):
+        arr[i] ^= 0x30
+        print(chr(arr[i]), end='')
+    print()
+  
+ 
+if __name__ == "__main__":
+	main()
+```
+- Welcome to assembly
