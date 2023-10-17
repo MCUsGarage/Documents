@@ -141,7 +141,7 @@ Operand
 
 
 
-Question 1
+Quiz 1
  end로 점프하면 프로그램이 종료된다고 가정하자. 프로그램이 종료됐을 때, 0x400000 부터 0x400019까지의 데이터를 대응되는 아스키 문자로 변환하면 어느 문자열이 나오는가?
 
 ```
@@ -188,3 +188,72 @@ if __name__ == "__main__":
 	main()
 ```
 - Welcome to assembly
+
+
+시스템 콜(syscall)
+- 유저 모드에서 커널 모드의 시스템 소프트웨어의 특정 동작을 요청할때 사용
+
+ 커널 모드
+- 운영체제가 전체 시스템을 제어하기 위해 시스템 소프트웨어에 부여하는 권한
+- 파일시스템, 입력/출력, 네트워크 통신, 메모리 관리 등 
+유저 모드
+- 운영체제가 사용자에게 부여하는 권한
+
+Quiz 2
+다음 어셈블리 코드를 실행했을 때 출력되는 결과로 올바른 것은?
+
+```
+[Code]
+main:
+    push rbp
+    mov rbp, rsp
+    mov esi, 0xf
+    mov rdi, 0x400500
+    call 0x400497 <write_n>
+    mov eax, 0x0
+    pop rbp
+    ret
+    
+write_n:
+    push rbp
+    mov rbp, rsp
+    mov QWORD PTR [rbp-0x8],rdi
+    mov DWORD PTR [rbp-0xc],esi
+    xor rdx, rdx
+    mov edx, DWORD PTR [rbp-0xc]
+    mov rsi,QWORD PTR [rbp-0x8]
+    mov rdi, 0x1
+    mov rax, 0x1
+    syscall
+    pop rbp
+    ret
+    
+==================================    
+[Memory]
+0x400500 | 0x3037207964343372
+0x400508 | 0x003f367562336420
+```
+- main 함수는 write_n 함수를 호출하는 코드만 있음
+- write_n 함수는 memory에 있는 값을 저장하고 syscall을 사용해서 stdout하는 함수임.
+- 이때 memory의 있는 값을 읽으면 됨
+```python
+def main():
+	mem1 = [0x30, 0x37, 0x20, 0x79, 0x64, 0x34, 0x33, 0x72]
+	mem2 = [0x00, 0x3f, 0x36, 0x75, 0x62, 0x33, 0x64, 0x20]
+	for m in reversed(mem1): print(chr(m), end='')
+	print()
+	for m in reversed(mem2): print(chr(m), end='')
+	print()
+	# r34dy 70
+	# d3bu6?
+
+if __name__ == "__main__":
+	main()
+```
+- reversed로 한 이유는 x86은 리틀 엔디안이기때문에 낮은 주소에 낮은 값이 들어감
+	- 0x400500 -> 0x72
+	- 0x400501 -> 0x33
+	- ...
+	- 0x040050f -> 0x3f
+	- 0x0400510 -> 0x00: `\0`
+- 정답: r34dy 70 d3bu6?
