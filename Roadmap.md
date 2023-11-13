@@ -31,13 +31,22 @@ Assembly
 wargame
 - https://pwnable.kr/
 - https://pwnable.tw/
+
 ## Reversing
 
 해커 지망자들이 알아야할 Buffer Overflow Attack의 기초
 - https://t1.daumcdn.net/cfile/tistory/99BB1E3B5B0A3EC836
 
+
+
 Book
 - 리버싱 입문
+   - abex crack me
+   - Lena's reversing tutorial for newbie (bob3rdnewbie.tistory.com)
+   - 디버깅 툴 OllyDbg
+   - 콜 스택, 코드 캐이브, 메모리 맵, 어셈블
+   - 패킹 언패킹, OEP(Original Entry Point), IAT(Import Address Table), 코드 인젝션
+   - IDA Pro
 - 리버스 엔지니어링 비밀을 파헤치다 https://product.kyobobook.co.kr/detail/S000000935114
 - 리버스 엔지니어링 바이블
 - 리버싱 핵심원리 https://product.kyobobook.co.kr/detail/S000001032944
